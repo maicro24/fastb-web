@@ -109,9 +109,9 @@ export default function DashboardPage({ agent }) {
           <p className="text-sm font-semibold text-gray-700 mb-3">جدول الأسعار — Pricing</p>
           <div className="space-y-2">
             {[
-              { label: '3 أشهر', price: '200 DA', cost: '150 pts', color: 'teal' },
-              { label: '6 أشهر', price: '300 DA', cost: '250 pts', color: 'teal' },
-              { label: '12 شهر', price: '450 DA', cost: '400 pts', color: 'orange' },
+              { label: '3 أشهر', price: '250 DA', cost: '200 pts', color: 'teal' },
+              { label: '6 أشهر', price: '400 DA', cost: '350 pts', color: 'teal' },
+              { label: '12 شهر', price: '550 DA', cost: '500 pts', color: 'orange' },
             ].map((t) => (
               <div key={t.label} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-xl">
                 <span className="text-sm font-medium text-gray-700">{t.label}</span>

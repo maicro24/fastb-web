@@ -3,11 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ref, get, update, runTransaction } from 'firebase/database';
 import { db } from '../firebase';
 
-// ── New Pricing (matching mobile app) ──
+// ── New Pricing (matching mobile app + 50 DA agent profit) ──
 const PLANS = [
-  { id: 'tier_7d',  days: 7,  months: 0, label: '7 أيام',  labelEn: '7 Days',   price: 200, cost: 150, icon: '📚', badge: null },
-  { id: 'tier_15d', days: 15, months: 0, label: '15 يوم',  labelEn: '15 Days',  price: 350, cost: 280, icon: '⏱️', badge: '💎 الأكثر شعبية' },
-  { id: 'tier_30d', days: 30, months: 0, label: '30 يوم',  labelEn: '30 Days',  price: 500, cost: 400, icon: '⭐', badge: '🔥 أفضل سعر', isBest: true },
+  { id: 'tier_3m',  days: 90,  months: 3,  label: '3 أشهر',  labelEn: '3 Months',  price: 250, cost: 200, icon: '📚', badge: null },
+  { id: 'tier_6m',  days: 180, months: 6,  label: '6 أشهر',  labelEn: '6 Months',  price: 400, cost: 350, icon: '⏱️', badge: '💎 الأكثر شعبية' },
+  { id: 'tier_12m', days: 365, months: 12, label: '12 شهر',  labelEn: '12 Months', price: 550, cost: 500, icon: '⭐', badge: '🔥 أفضل سعر', isBest: true },
 ];
 
 export default function ActivatePage({ agent, setAgent }) {
