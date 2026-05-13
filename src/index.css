@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-orange-500: #ff6500;
+  --color-orange-600: #e55a00;
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+  }
+}
+
+/* Scanner video styling */
+#qr-reader video {
+  border-radius: 1rem;
+}
+#qr-reader {
+  border: none !important;
+}
+
+/* Success checkmark animation */
+@keyframes checkmark-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes circle-fill {
+  to { opacity: 1; transform: scale(1); }
+}
+.success-circle {
+  animation: circle-fill 0.4s ease-out forwards;
+  opacity: 0;
+  transform: scale(0.5);
+}
+.success-check {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: checkmark-draw 0.5s 0.3s ease-out forwards;
+}
+
+/* Pulse animation for scanner */
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  70% { transform: scale(1.1); opacity: 0; }
+  100% { transform: scale(1.1); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 1.5s infinite;
+}
