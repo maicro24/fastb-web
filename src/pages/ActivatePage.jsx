@@ -10,7 +10,7 @@ const PLANS = [
   { id: 'tier_12m', days: 365, months: 12, label: '12 شهر',  labelEn: '12 Months', price: 550, cost: 500, icon: '⭐', badge: '🔥 أفضل سعر', isBest: true },
 ];
 
-export default function ActivatePage({ agent, setAgent }) {
+export default function ActivatePage({ agent }) {
   const { uid } = useParams();
   const navigate = useNavigate();
   const [passenger, setPassenger] = useState(null);
@@ -69,13 +69,22 @@ export default function ActivatePage({ agent, setAgent }) {
       expirationDate.setDate(expirationDate.getDate() + selectedPlan.days);
 
       // ── Deduct points from agent (atomic transaction) ──
-      const agentRef = ref(db, `agents/${agent.uid}/wallet_balance`);
-      await runTransaction(agentRef, (currentBalance) => {
+      // runTransaction on the wallet_balance field ensures atomicity.
+      // If the balance is insufficient at the moment of write, we abort.
+      const agentBalanceRef = ref(db, `agents/${agent.uid}/wallet_balance`);
+      const txResult = await runTransaction(agentBalanceRef, (currentBalance) => {
         if (currentBalance === null || currentBalance < selectedPlan.cost) {
           return; // Abort — insufficient funds
         }
         return currentBalance - selectedPlan.cost;
       });
+
+      // Check if transaction was aborted (insufficient funds at DB level)
+      if (!txResult.committed) {
+        setError('رصيدك غير كافٍ — Insufficient balance (verified)');
+        setActivating(false);
+        return;
+      }
 
       // ── Step C: Update user subscription in RTDB ──
       await update(ref(db, `users/${uid}`), {
@@ -95,17 +104,17 @@ export default function ActivatePage({ agent, setAgent }) {
         'subscription/paidAt': now.toISOString(),
       });
 
-      // ── Update agent stats ──
-      await update(ref(db, `agents/${agent.uid}`), {
-        total_activations: (agent?.total_activations ?? 0) + 1,
+      // ── Update agent activation count (atomic) ──
+      const agentCountRef = ref(db, `agents/${agent.uid}/total_activations`);
+      await runTransaction(agentCountRef, (current) => {
+        return (current || 0) + 1;
       });
 
-      // ── Update local agent state ──
-      setAgent((prev) => ({
-        ...prev,
-        wallet_balance: (prev?.wallet_balance ?? 0) - selectedPlan.cost,
-        total_activations: (prev?.total_activations ?? 0) + 1,
-      }));
+      // ── NO manual setAgent() here ──
+      // The real-time onValue listener in App.jsx will automatically
+      // detect the wallet_balance and total_activations changes in
+      // Firebase and update the agent state. This is the ONLY source
+      // of truth — no local state desyncs possible.
 
       // Navigate to success with details
       navigate('/success', {

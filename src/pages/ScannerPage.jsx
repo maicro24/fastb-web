@@ -46,32 +46,28 @@ function extractUID(raw) {
 async function processRecharge(agentUid, userUid, plan) {
   const now = new Date();
 
-  // 1. Read agent balance
-  const agentSnap = await get(ref(db, `agents/${agentUid}`));
-  if (!agentSnap.exists()) throw new Error('Agent introuvable');
-  const agentData = agentSnap.val();
-  if ((agentData.wallet_balance ?? 0) < plan.cost) {
-    throw new Error('Solde insuffisant pour cette opération');
-  }
-
-  // 2. Read user
+  // 1. Read user
   const userSnap = await get(ref(db, `users/${userUid}`));
   if (!userSnap.exists()) throw new Error('Utilisateur introuvable');
   const userData = userSnap.val();
 
-  // 3. Calculate subscription end date (append if active)
+  // 2. Calculate subscription end date (append if active)
   const existingExp = userData?.subscription?.expirationTimestamp;
   const baseDate = (existingExp && existingExp > now.getTime()) ? new Date(existingExp) : now;
   const endDate = new Date(baseDate);
   endDate.setDate(endDate.getDate() + plan.days);
 
-  // 4. Atomic deduct from agent
-  await runTransaction(ref(db, `agents/${agentUid}/wallet_balance`), (bal) => {
+  // 3. Atomic deduct from agent wallet (the ONLY safe way)
+  const txResult = await runTransaction(ref(db, `agents/${agentUid}/wallet_balance`), (bal) => {
     if (bal === null || bal < plan.cost) return; // abort
     return bal - plan.cost;
   });
 
-  // 5. Update user subscription
+  if (!txResult.committed) {
+    throw new Error('رصيدك غير كافٍ — Insufficient balance');
+  }
+
+  // 4. Update user subscription
   await update(ref(db, `users/${userUid}`), {
     isPro: true,
     'subscription/isPaid': true,
@@ -89,12 +85,12 @@ async function processRecharge(agentUid, userUid, plan) {
     'subscription/paidAt': now.toISOString(),
   });
 
-  // 6. Update agent stats
-  await update(ref(db, `agents/${agentUid}`), {
-    total_activations: (agentData.total_activations ?? 0) + 1,
+  // 5. Update agent stats (atomic)
+  await runTransaction(ref(db, `agents/${agentUid}/total_activations`), (current) => {
+    return (current || 0) + 1;
   });
 
-  // 7. Log transaction
+  // 6. Log transaction
   await push(ref(db, 'transactions'), {
     agentId: agentUid,
     userId: userUid,
@@ -106,19 +102,22 @@ async function processRecharge(agentUid, userUid, plan) {
     timestamp: now.getTime(),
   });
 
+  // Read the actual new balance from the committed transaction
+  const newBalance = txResult.snapshot.val();
+
   return {
     userEmail: userData?.email || userData?.phone || 'N/A',
     userName: userData?.displayName || 'مستخدم',
     endDate: endDate.toLocaleDateString('ar-DZ', { year: 'numeric', month: 'long', day: 'numeric' }),
     wasExtended: existingExp && existingExp > now.getTime(),
-    newBalance: (agentData.wallet_balance ?? 0) - plan.cost,
+    newBalance: newBalance,
   };
 }
 
 // ═══════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════
-export default function ScannerPage({ agent, setAgent }) {
+export default function ScannerPage({ agent }) {
   const navigate = useNavigate();
   const scannerRef = useRef(null);
   const hasScanned = useRef(false);
@@ -186,12 +185,8 @@ export default function ScannerPage({ agent, setAgent }) {
       playBeep(true);
       vibrate();
       setResult(res);
-      // Update local agent state
-      setAgent?.(prev => ({
-        ...prev,
-        wallet_balance: res.newBalance,
-        total_activations: (prev?.total_activations ?? 0) + 1,
-      }));
+      // NO manual setAgent() — the real-time onValue listener
+      // in App.jsx auto-updates agent state from Firebase.
       showToast('success', 'Recharge réussie, solde déduit ✓');
     } catch (err) {
       playBeep(false);

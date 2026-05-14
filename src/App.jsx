@@ -1,10 +1,13 @@
 /**
  * Fast B Agent Portal — App Router
+ *
+ * Uses onValue (real-time listener) instead of get() to keep
+ * the agent's wallet_balance and stats always in sync with Firebase.
  */
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ref, get } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import { auth, db } from './firebase';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -22,20 +25,43 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    let unsubData = null; // RTDB listener cleanup
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      // Clean up previous RTDB listener when auth state changes
+      if (unsubData) {
+        unsubData();
+        unsubData = null;
+      }
+
       if (user) {
-        const snap = await get(ref(db, `agents/${user.uid}`));
-        if (snap.exists()) {
-          setAgent({ uid: user.uid, ...snap.val() });
-        } else {
+        // ── Real-time listener on agent document ──────────
+        // This replaces the old get() one-time fetch.
+        // Any change to agents/{uid} (including wallet_balance)
+        // will instantly update the UI.
+        const agentRef = ref(db, `agents/${user.uid}`);
+        unsubData = onValue(agentRef, (snap) => {
+          if (snap.exists()) {
+            setAgent({ uid: user.uid, ...snap.val() });
+          } else {
+            setAgent(null);
+          }
+          setLoading(false);
+        }, (err) => {
+          console.error('Agent listener error:', err);
           setAgent(null);
-        }
+          setLoading(false);
+        });
       } else {
         setAgent(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return () => unsub();
+
+    return () => {
+      unsubAuth();
+      if (unsubData) unsubData();
+    };
   }, []);
 
   if (loading) {
@@ -55,9 +81,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={agent ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/" element={<ProtectedRoute agent={agent}><DashboardPage agent={agent} setAgent={setAgent} /></ProtectedRoute>} />
-      <Route path="/scan" element={<ProtectedRoute agent={agent}><ScannerPage agent={agent} setAgent={setAgent} /></ProtectedRoute>} />
-      <Route path="/activate/:uid" element={<ProtectedRoute agent={agent}><ActivatePage agent={agent} setAgent={setAgent} /></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute agent={agent}><DashboardPage agent={agent} /></ProtectedRoute>} />
+      <Route path="/scan" element={<ProtectedRoute agent={agent}><ScannerPage agent={agent} /></ProtectedRoute>} />
+      <Route path="/activate/:uid" element={<ProtectedRoute agent={agent}><ActivatePage agent={agent} /></ProtectedRoute>} />
       <Route path="/success" element={<ProtectedRoute agent={agent}><SuccessPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
