@@ -56,7 +56,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={agent ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path="/" element={<ProtectedRoute agent={agent}><DashboardPage agent={agent} setAgent={setAgent} /></ProtectedRoute>} />
-      <Route path="/scan" element={<ProtectedRoute agent={agent}><ScannerPage agent={agent} /></ProtectedRoute>} />
+      <Route path="/scan" element={<ProtectedRoute agent={agent}><ScannerPage agent={agent} setAgent={setAgent} /></ProtectedRoute>} />
       <Route path="/activate/:uid" element={<ProtectedRoute agent={agent}><ActivatePage agent={agent} setAgent={setAgent} /></ProtectedRoute>} />
       <Route path="/success" element={<ProtectedRoute agent={agent}><SuccessPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
