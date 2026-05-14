@@ -91,6 +91,7 @@ export default function ActivatePage({ agent, setAgent }) {
         'subscription/lastRechargeDate': now.toISOString(),
         'subscription/paymentMethod': 'agent',
         'subscription/agentId': agent.uid,
+        'subscription/lastRechargeBy': agent.uid,
         'subscription/paidAt': now.toISOString(),
       });
 
