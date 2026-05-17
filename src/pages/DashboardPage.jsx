@@ -111,7 +111,7 @@ export default function DashboardPage({ agent }) {
             {[
               { label: '3 أشهر', price: '250 DA', cost: '200 pts', color: 'teal' },
               { label: '6 أشهر', price: '400 DA', cost: '350 pts', color: 'teal' },
-              { label: '12 شهر', price: '550 DA', cost: '500 pts', color: 'orange' },
+              { label: '12 شهر', price: '650 DA', cost: '600 pts', color: 'orange' },
             ].map((t) => (
               <div key={t.label} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-xl">
                 <span className="text-sm font-medium text-gray-700">{t.label}</span>

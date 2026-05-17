@@ -7,7 +7,7 @@ import { db } from '../firebase';
 const PLANS = [
   { id: 'tier_3m',  days: 90,  months: 3,  label: '3 أشهر',  labelEn: '3 Months',  price: 250, cost: 200, icon: '📚', badge: null },
   { id: 'tier_6m',  days: 180, months: 6,  label: '6 أشهر',  labelEn: '6 Months',  price: 400, cost: 350, icon: '⏱️', badge: '💎 الأكثر شعبية' },
-  { id: 'tier_12m', days: 365, months: 12, label: '12 شهر',  labelEn: '12 Months', price: 550, cost: 500, icon: '⭐', badge: '🔥 أفضل سعر', isBest: true },
+  { id: 'tier_12m', days: 365, months: 12, label: '12 شهر',  labelEn: '12 Months', price: 650, cost: 600, icon: '⭐', badge: '🔥 أفضل سعر', isBest: true },
 ];
 
 export default function ActivatePage({ agent }) {

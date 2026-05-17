@@ -8,7 +8,7 @@ import { db } from '../firebase';
 const PLANS = [
   { id: '3m', days: 90, label: '3 أشهر', labelEn: '3 Months', price: 250, cost: 200, icon: '📚' },
   { id: '6m', days: 180, label: '6 أشهر', labelEn: '6 Months', price: 400, cost: 350, icon: '⏱️', popular: true },
-  { id: '12m', days: 365, label: '12 شهر', labelEn: '12 Months', price: 550, cost: 500, icon: '⭐', best: true },
+  { id: '12m', days: 365, label: '12 شهر', labelEn: '12 Months', price: 650, cost: 600, icon: '⭐', best: true },
 ];
 
 // ── Audio/Haptic helpers ──
